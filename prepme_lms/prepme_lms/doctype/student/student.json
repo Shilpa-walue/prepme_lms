@@ -1,0 +1,103 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "field:student_name",
+  "creation": "2026-07-18 12:00:00",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "student_name",
+    "phone_number",
+    "email_id",
+    "college_name",
+    "batch_year",
+    "course_name",
+    "city",
+    "state",
+    "pincode"
+  ],
+  "fields": [
+    {
+      "fieldname": "student_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Student Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "phone_number",
+      "fieldtype": "Phone",
+      "in_list_view": 1,
+      "label": "Phone Number",
+      "reqd": 1
+    },
+    {
+      "fieldname": "email_id",
+      "fieldtype": "Data",
+      "options": "Email",
+      "in_list_view": 1,
+      "label": "Email ID",
+      "reqd": 1
+    },
+    {
+      "fieldname": "college_name",
+      "fieldtype": "Data",
+      "label": "College Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "batch_year",
+      "fieldtype": "Data",
+      "label": "Batch / Year",
+      "reqd": 1
+    },
+    {
+      "fieldname": "course_name",
+      "fieldtype": "Data",
+      "label": "Course Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "city",
+      "fieldtype": "Data",
+      "label": "City"
+    },
+    {
+      "fieldname": "state",
+      "fieldtype": "Data",
+      "label": "State"
+    },
+    {
+      "fieldname": "pincode",
+      "fieldtype": "Data",
+      "label": "Pincode"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "issingle": 0,
+  "istable": 0,
+  "links": [],
+  "module": "Prepme LMS",
+  "name": "Student",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "quick_entry": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}
