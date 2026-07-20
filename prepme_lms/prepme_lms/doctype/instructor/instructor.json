@@ -16,7 +16,8 @@
   "experience",
   "city",
   "state",
-  "pincode"
+  "pincode",
+  "course_name"
  ],
  "fields": [
   {
@@ -75,10 +76,16 @@
   {
    "fieldname": "column_break_cg4z",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "course_name",
+   "fieldtype": "Link",
+   "label": "Course Name",
+   "options": "LMS Course"
   }
  ],
  "links": [],
- "modified": "2026-07-18 15:23:44.271657",
+ "modified": "2026-07-20 15:13:45.593764",
  "modified_by": "Administrator",
  "module": "Prepme LMS",
  "name": "Instructor",

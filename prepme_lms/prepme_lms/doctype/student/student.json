@@ -54,8 +54,9 @@
     },
     {
       "fieldname": "course_name",
-      "fieldtype": "Data",
+      "fieldtype": "Link",
       "label": "Course Name",
+      "options": "LMS Course",
       "reqd": 1
     },
     {
