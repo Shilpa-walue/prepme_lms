@@ -8,7 +8,9 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+# The Course API reads LMS Course / Course Chapter / Course Lesson,
+# which are owned by the `lms` app.
+required_apps = ["lms"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
