@@ -80,8 +80,16 @@ def parse_lesson_content(lesson: dict, include_instructor_notes: bool = False) -
 			_parse_block(block, collected, source="content")
 	elif raw_body:
 		content_format = "markdown"
-		_parse_markdown(raw_body, collected, source="body")
-	else:
+
+	# The legacy `body` is scanned even when blocks exist: lessons migrated to the
+	# block editor keep their old markdown, and it can carry macros - notably
+	# {{ YouTubeVideo("...") }} - that never made it into a block. Its prose is
+	# only collected when there are no blocks, otherwise the description would
+	# contain the same text twice. Duplicate media is removed by _add_unique.
+	if raw_body:
+		_parse_markdown(raw_body, collected, source="body", collect_text=not blocks)
+
+	if not blocks and not raw_body:
 		content_format = "empty"
 
 	if include_instructor_notes:
@@ -94,10 +102,13 @@ def parse_lesson_content(lesson: dict, include_instructor_notes: bool = False) -
 
 	_enrich_with_file_metadata(collected)
 
+	text_parts = collected.pop("_text")
+
 	return {
 		"content_format": content_format,
 		"blocks": blocks,
-		"description": _build_description(collected.pop("_text")),
+		"description": _build_description(text_parts),
+		"content_text": _build_text(text_parts),
 		"videos": collected["videos"],
 		"documents": collected["documents"],
 		"images": collected["images"],
@@ -248,8 +259,12 @@ def _block_text(data: dict) -> str:
 	return ""
 
 
-def _parse_markdown(body: str, collected: dict, source: str) -> None:
-	"""Walk legacy markdown, pulling out macros, images and linked documents."""
+def _parse_markdown(body: str, collected: dict, source: str, collect_text: bool = True) -> None:
+	"""Walk legacy markdown, pulling out macros, images and linked documents.
+
+	`collect_text` is False when the lesson also has block content, so the same
+	prose is not counted twice toward the description.
+	"""
 	for name, argument in MACRO_RE.findall(body):
 		argument = _strip_quotes(argument)
 		if not argument:
@@ -283,7 +298,8 @@ def _parse_markdown(body: str, collected: dict, source: str) -> None:
 		if _extension(url) in DOCUMENT_EXTENSIONS:
 			_add_file(collected, file_url=url, declared_type=None, caption=None, source=source)
 
-	collected["_text"].append(strip_html_tags(MACRO_RE.sub(" ", body)))
+	if collect_text:
+		collected["_text"].append(strip_html_tags(MACRO_RE.sub(" ", body)))
 
 
 def _add_embed(collected: dict, service, url, caption, source) -> None:
@@ -495,8 +511,18 @@ def _enrich_with_file_metadata(collected: dict) -> None:
 		asset["is_private"] = bool(record.is_private)
 
 
+def _build_text(text_parts: list) -> str | None:
+	"""The lesson's full prose as plain text, with blank blocks removed."""
+	lines = [re.sub(r"\s+", " ", part).strip() for part in text_parts if part and part.strip()]
+	return "\n".join(lines) if lines else None
+
+
 def _build_description(text_parts: list, limit: int = 500) -> str | None:
-	"""Condense the lesson's prose into a short plain-text description."""
+	"""Condense the lesson's prose into a short plain-text description.
+
+	Use `content_text` when the complete body is needed - this is the trimmed
+	summary intended for cards and listings.
+	"""
 	text = " ".join(part.strip() for part in text_parts if part and part.strip())
 	text = re.sub(r"\s+", " ", text).strip()
 

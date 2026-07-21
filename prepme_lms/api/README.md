@@ -91,7 +91,17 @@ curl -H "Authorization: token <api_key>:<api_secret>" \
             "include_in_preview": true,
             "content_locked": false,
             "content_format": "blocks",
-            "description": "Understanding derivatives and rates of change…",
+            "idx": 2,
+            "docstatus": 0,
+            "owner": "Administrator",
+            "modified_by": "Administrator",
+            "created_on": "2026-07-16 18:46:10.458123",
+            "modified_on": "2026-07-22 00:22:41.806510",
+
+            // short summary for cards/listings (max 500 chars)
+            "description": "Short Description Get started with ReactJS by learning what it is…",
+            // complete prose, one line per block, never truncated
+            "content_text": "Short Description\nGet started with ReactJS…\nLearning Outcome\n…",
 
             "videos": [
               {
@@ -178,8 +188,19 @@ walks those reference tables, so sequence always matches what the author arrange
 Sorting the chapter/lesson records themselves would produce the wrong order.
 
 **Media extraction.** Lessons store no dedicated video or document fields. Content
-lives either in `content` (an EditorJS block document) or, for older lessons, in
-`body` as Markdown with macros. `content_parser` handles both:
+lives in `content` (an EditorJS block document) and/or `body` (Markdown with macros).
+
+Both are always scanned — not one or the other. Lessons migrated to the block editor
+keep their old markdown, and it can carry macros such as `{{ YouTubeVideo("QFaFIcGhPoM") }}`
+that never made it into a block; scanning only the blocks would silently lose them.
+Duplicate media is collapsed, so a video present in *both* the embed block and the body
+macro is returned once. Its `source` field records where it was found (`content`, `body`,
+`youtube_field`, `lesson_attachment`).
+
+Body *prose* is only used for `description` / `content_text` when the lesson has no
+blocks — otherwise the same text would be counted twice.
+
+`content_parser` handles:
 
 | Source | Extracted as |
 | --- | --- |
@@ -193,8 +214,9 @@ lives either in `content` (an EditorJS block document) or, for older lessons, in
 | `File` records attached to the lesson | `attachments` |
 
 YouTube ids are normalised from every URL shape (`youtu.be`, `/embed/`, `/shorts/`,
-`watch?v=`, bare id) and each video is returned with a watch url, embed url and
-thumbnail. Assets are deduplicated, so the same video referenced two ways appears once.
+`watch?v=`, bare id), so `{{ YouTubeVideo("QFaFIcGhPoM") }}` and an embed block pointing
+at `https://www.youtube.com/embed/QFaFIcGhPoM` both resolve to `video_id: "QFaFIcGhPoM"`
+and collapse into a single entry. Each video carries a watch url, embed url and thumbnail.
 Site-hosted files are enriched from the `File` doctype with real name, size and privacy.
 
 **Access control.** These endpoints use `frappe.get_all`, which bypasses Frappe's

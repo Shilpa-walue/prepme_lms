@@ -40,7 +40,7 @@ LESSON_FIELDS = [
 	"name", "title", "chapter", "course", "body", "content",
 	"include_in_preview", "youtube", "quiz_id", "question", "file_type",
 	"is_scorm_package", "instructor_notes", "instructor_content",
-	"creation", "modified",
+	"idx", "docstatus", "owner", "modified_by", "creation", "modified",
 ]
 
 
@@ -359,16 +359,20 @@ def _serialize_lesson(lesson, index: int, access: dict, include_content: bool, i
 
 	payload = {
 		"id": lesson.name,
-		"title": lesson.title,
+		"title": (lesson.title or "").strip(),
 		"index": index,
+		"idx": lesson.idx,
 		"chapter": lesson.chapter,
 		"course": lesson.course,
 		"include_in_preview": is_preview,
 		"is_scorm_package": bool(lesson.is_scorm_package),
-		"file_type": lesson.file_type,
+		"file_type": lesson.file_type or None,
 		"question": lesson.question,
 		"quiz_id": lesson.quiz_id,
 		"content_locked": not can_view_content,
+		"docstatus": lesson.docstatus,
+		"owner": lesson.owner,
+		"modified_by": lesson.modified_by,
 		"created_on": lesson.creation,
 		"modified_on": lesson.modified,
 	}
@@ -378,6 +382,7 @@ def _serialize_lesson(lesson, index: int, access: dict, include_content: bool, i
 		payload.update({
 			"content_format": None,
 			"description": None,
+			"content_text": None,
 			"videos": [],
 			"documents": [],
 			"images": [],
@@ -406,6 +411,7 @@ def _serialize_lesson(lesson, index: int, access: dict, include_content: bool, i
 	payload.update({
 		"content_format": parsed["content_format"],
 		"description": parsed["description"],
+		"content_text": parsed["content_text"],
 		"videos": parsed["videos"],
 		"documents": parsed["documents"],
 		"images": parsed["images"],
