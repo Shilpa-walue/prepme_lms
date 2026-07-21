@@ -21,7 +21,7 @@ def grant_drive_access(student_id):
         )
         return
 
-    email = student.email
+    email = student.email_id
 
     if not email:
 
