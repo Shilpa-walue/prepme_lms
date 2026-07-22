@@ -29,7 +29,8 @@ including each lesson's description, YouTube/embedded videos, documents and atta
 | --- | --- | --- |
 | `course` | *required* | `LMS Course` id (slug) or exact title |
 | `include_content` | `1` | Include raw lesson blocks and markdown body |
-| `include_instructor_notes` | `0` | Include instructor-only notes (privileged) |
+| `include_instructor_notes` | `0` | Include instructor-only notes |
+| `enforce_access` | `0` | Apply LMS access rules — see below |
 
 A lighter variant, same shape without raw lesson bodies:
 
@@ -220,13 +221,39 @@ and collapse into a single entry. Each video carries a watch url, embed url and 
 Site-hosted files are enriched from the `File` doctype with real name, size and privacy.
 
 **Access control.** These endpoints use `frappe.get_all`, which bypasses Frappe's
-permission layer, so access is enforced explicitly in `course_service`:
+permission layer, so access is enforced explicitly in `course_service` — and only when
+`enforce_access=1` is passed.
 
-- Unpublished courses → visible only to enrolled members, course instructors, moderators.
-- Lessons not marked `include_in_preview` → returned with `content_locked: true` and
-  empty media arrays for users without full access. Titles and ordering stay visible so
-  the curriculum remains browsable without leaking paid content.
-- `instructor_notes` → returned only to that course's instructors and moderators,
-  regardless of the request parameter.
+> **`enforce_access` defaults to `0`, which returns the full course to anyone who can
+> reach the endpoint — including unpublished drafts and paid lesson content, to
+> unauthenticated callers.** The endpoints are `allow_guest=True`. That default suits
+> trusted server-to-server and admin use. **Pass `enforce_access=1` on any public or
+> browser-facing call**, or drop `allow_guest` so a session is always required.
+
+With `enforce_access=1`:
+
+- Unpublished courses → `403` for anyone who is not enrolled, an instructor, or a moderator.
+- Lessons not marked `include_in_preview` → `content_locked: true` with empty media
+  arrays for users without full access. Titles, ordering and counts stay visible, so the
+  curriculum remains browsable without leaking paid content.
+- `instructor_notes` → only for that course's instructors and moderators, whatever the
+  request asked for.
+
+The `access` block in every response reports what was applied:
+
+```json
+"access": {
+  "enforced": false,
+  "is_enrolled": false, "is_instructor": false,
+  "is_moderator": false, "has_full_access": false,
+  "instructor_notes_included": false
+}
+```
 
 Endpoints are rate limited to 60 requests/minute.
+
+**A note on `idx`.** Each lesson carries both `index` and `idx`. Sort on **`index`** —
+it is the authored position (1..n) derived from the `Lesson Reference` rows. `idx` is the
+raw column on the `Course Lesson` record, is not maintained as a course-wide sequence,
+and in real data appears as values like `2, 4, 0, 1, 0, 1`. It is exposed only for
+completeness; ordering by it will scramble the curriculum.

@@ -56,6 +56,7 @@ def get_course_details(
 	course: str,
 	include_content: bool = True,
 	include_instructor_notes: bool = False,
+	enforce_access: bool = False,
 ) -> dict:
 	"""Build the complete course payload.
 
@@ -63,12 +64,19 @@ def get_course_details(
 		course: `LMS Course` name (slug) or exact course title.
 		include_content: include raw lesson blocks/body alongside the
 			extracted media. Set False for a lighter curriculum-only response.
-		include_instructor_notes: include instructor-only notes. Honoured only
-			for instructors and moderators.
+		include_instructor_notes: include instructor-only notes. When
+			`enforce_access` is on, honoured only for instructors and moderators.
+		enforce_access: apply LMS access rules. Off by default, so the endpoint
+			returns the complete course regardless of enrolment - the intended
+			behaviour for trusted server-to-server and admin use. Turn it on for
+			public or unauthenticated callers: unpublished courses then 403, and
+			lessons not marked `include_in_preview` come back with
+			`content_locked: true` and empty media for users without access.
 
 	Raises:
 		CourseNotFound: no such course.
-		CourseAccessDenied: course is unpublished and the user cannot see it.
+		CourseAccessDenied: `enforce_access` is on, the course is unpublished,
+			and the caller cannot see it.
 	"""
 	course_name = _resolve_course(course)
 
@@ -77,12 +85,15 @@ def get_course_details(
 
 	course_doc = frappe.get_doc("LMS Course", course_name)
 	access = _get_access_context(course_doc)
+	access["enforce"] = enforce_access
 
-	if not course_doc.published and not access["has_full_access"]:
+	if enforce_access and not course_doc.published and not access["has_full_access"]:
 		raise CourseAccessDenied(_("Course {0} is not published").format(course_name))
 
-	# Instructor notes are privileged regardless of what the caller asked for.
-	expose_notes = include_instructor_notes and (access["is_instructor"] or access["is_moderator"])
+	# When enforcing, instructor notes stay privileged regardless of the request.
+	expose_notes = include_instructor_notes and (
+		not enforce_access or access["is_instructor"] or access["is_moderator"]
+	)
 
 	chapters = _get_chapters(
 		course_doc,
@@ -96,6 +107,7 @@ def get_course_details(
 		"chapters": chapters,
 		"summary": _build_summary(chapters),
 		"access": {
+			"enforced": enforce_access,
 			"is_enrolled": access["is_enrolled"],
 			"is_instructor": access["is_instructor"],
 			"is_moderator": access["is_moderator"],
@@ -221,7 +233,12 @@ def _get_instructors(course_doc) -> list:
 
 
 def _get_related_courses(course_doc) -> list:
-	course_names = [row.course for row in course_doc.related_courses if row.course]
+	# A course can end up listed against itself; that is never a useful result.
+	course_names = [
+		row.course
+		for row in course_doc.related_courses
+		if row.course and row.course != course_doc.name
+	]
 
 	if not course_names:
 		return []
@@ -355,7 +372,7 @@ def _get_lessons(chapter_names: list, access: dict, include_content: bool, inclu
 def _serialize_lesson(lesson, index: int, access: dict, include_content: bool, include_instructor_notes: bool, attachments: list) -> dict:
 	"""Serialize one lesson, redacting the body when access is not granted."""
 	is_preview = bool(lesson.include_in_preview)
-	can_view_content = access["has_full_access"] or is_preview
+	can_view_content = not access["enforce"] or access["has_full_access"] or is_preview
 
 	payload = {
 		"id": lesson.name,
