@@ -1,0 +1,26 @@
+{
+  "name": "prepme-lms-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=/assets/prepme_lms/frontend/ && yarn copy-html-entry",
+    "copy-html-entry": "cp ../prepme_lms/public/frontend/index.html ../prepme_lms/www/study_hub.html"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.6",
+    "frappe-ui": "0.1.205",
+    "lucide-vue-next": "^0.383.0",
+    "pinia": "^2.0.33",
+    "tailwindcss": "3.4.15",
+    "vue": "^3.4.23",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.5",
+    "vite": "^5.0.11"
+  }
+}

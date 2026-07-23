@@ -26,7 +26,7 @@ from prepme_lms.services.course.course_service import (
 from prepme_lms.utils.response import error_response, success_response
 
 
-@frappe.whitelist(allow_guest=True, methods=["GET"])
+@frappe.whitelist(allow_guest=True, methods=["GET", "POST"])
 @rate_limit(limit=60, seconds=60)
 def get_course_details(
 	course: str = None,
@@ -54,7 +54,7 @@ def get_course_details(
 	)
 
 
-@frappe.whitelist(allow_guest=True, methods=["GET"])
+@frappe.whitelist(allow_guest=True, methods=["GET", "POST"])
 @rate_limit(limit=60, seconds=60)
 def get_course_curriculum(course: str = None, enforce_access: int = 0):
 	"""Fetch the course outline and media without the raw lesson bodies."""

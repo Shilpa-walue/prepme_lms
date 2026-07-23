@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" href="{{ favicon }}" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0F0F0F" media="(prefers-color-scheme: dark)" />
+		<title>{{ title }}</title>
+		<script type="module" crossorigin src="/assets/prepme_lms/frontend/assets/index-DmXdPWGF.js"></script>
+		<link rel="stylesheet" crossorigin href="/assets/prepme_lms/frontend/assets/index-CCntFmAJ.css">
+	</head>
+	<body class="sm:overscroll-y-none no-scrollbar">
+		<div id="app"></div>
+	
+          <script>
+              {% for key in boot %}
+              window["{{ key }}"] = {{ boot[key] | tojson }};
+              {% endfor %}
+          </script>
+          </body>
+          
+</html>

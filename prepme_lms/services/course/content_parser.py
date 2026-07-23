@@ -47,6 +47,9 @@ YOUTUBE_URL_RE = re.compile(
 	r"(?:youtu\.be/|youtube\.com/(?:embed/|v/|shorts/|live/|watch\?(?:[^&]*&)*v=))([A-Za-z0-9_-]{11})"
 )
 YOUTUBE_BARE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
+# `LMS Course.validate_video_link` rewrites any value containing "/" to its last
+# segment, so a pasted watch URL is stored as the bare fragment "watch?v=<id>".
+YOUTUBE_QUERY_ID_RE = re.compile(r"(?:^|[?&])v=([A-Za-z0-9_-]{11})(?:&|$)")
 VIMEO_URL_RE = re.compile(r"vimeo\.com/(?:video/)?(\d+)")
 
 DOCUMENT_EXTENSIONS = {
@@ -380,7 +383,12 @@ def _youtube_id(value: str) -> str | None:
 	if match:
 		return match.group(1)
 
-	return value if YOUTUBE_BARE_ID_RE.match(value) else None
+	if YOUTUBE_BARE_ID_RE.match(value):
+		return value
+
+	# Bare "watch?v=<id>" / "v=<id>" fragments, as stored by LMS Course.video_link.
+	match = YOUTUBE_QUERY_ID_RE.search(value)
+	return match.group(1) if match else None
 
 
 def _add_file(collected: dict, file_url, declared_type, caption, source) -> None:
