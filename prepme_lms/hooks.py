@@ -23,6 +23,13 @@ website_route_rules = [
 	{"from_route": "/prepme/<path:app_path>", "to_route": "study_hub"},
 ]
 
+# Add the "Calendar" entry to the LMS sidebar "More" menu. This is done purely
+# with site-database records (Web Page + LMS Sidebar Item), so it works on
+# Frappe Cloud and makes no edits to the LMS app files.
+after_install = "prepme_lms.lms_integration.setup_calendar_link"
+after_migrate = "prepme_lms.lms_integration.setup_calendar_link"
+before_uninstall = "prepme_lms.lms_integration.remove_calendar_link"
+
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
