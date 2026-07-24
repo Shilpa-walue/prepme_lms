@@ -47,9 +47,12 @@ def get_my_classes(from_date=None, to_date=None, batch=None) -> dict:
 	if user == "Guest":
 		return _empty_result(user)
 
+	# Moderators/admins see every scheduled class on the site (an admin overview),
+	# not just batches they personally belong to.
+	is_moderator = _is_moderator(user)
 	batches = _get_user_batches(user)
 
-	classes = _get_live_classes(user, batches, from_date, to_date, batch)
+	classes = _get_live_classes(user, batches, from_date, to_date, batch, is_moderator)
 
 	if not classes:
 		return _empty_result(user, batches)
@@ -63,14 +66,19 @@ def get_my_classes(from_date=None, to_date=None, batch=None) -> dict:
 	]
 	events.sort(key=lambda e: (e["fromDate"], e["fromTime"] or ""))
 
+	# Batches actually represented in the result (covers the moderator-sees-all
+	# case, where the classes span batches the user isn't a member of).
+	result_batches = {row.batch_name for row in classes if row.batch_name}
+
 	return {
 		"events": events,
-		"summary": _build_summary(events, batches),
+		"summary": _build_summary(events, result_batches),
 		"context": {
 			"user": user,
+			"is_moderator": is_moderator,
 			"batches": [
 				{"id": name, "title": batch_titles.get(name, name)}
-				for name in sorted(batches)
+				for name in sorted(result_batches)
 			],
 			"from_date": from_date,
 			"to_date": to_date,
@@ -84,6 +92,11 @@ def _empty_result(user, batches=None) -> dict:
 		"summary": {"total_events": 0, "total_batches": len(batches or []), "upcoming": 0, "past": 0},
 		"context": {"user": user, "batches": [], "from_date": None, "to_date": None},
 	}
+
+
+def _is_moderator(user: str) -> bool:
+	roles = set(frappe.get_roles(user))
+	return bool(roles & {"Moderator", "System Manager", "LMS Admin", "Course Creator"})
 
 
 def _get_user_batches(user: str) -> set:
@@ -103,7 +116,7 @@ def _get_user_batches(user: str) -> set:
 	return {b for b in list(enrolled) + list(teaching) if b}
 
 
-def _get_live_classes(user, batches, from_date, to_date, batch) -> list:
+def _get_live_classes(user, batches, from_date, to_date, batch, is_moderator=False) -> list:
 	"""Fetch live classes visible to this user, optionally date/batch bounded."""
 	date_filters = {}
 	if from_date:
@@ -114,6 +127,13 @@ def _get_live_classes(user, batches, from_date, to_date, batch) -> list:
 			date_filters["date"] = ["between", [getdate(from_date), getdate(to_date)]]
 		else:
 			date_filters["date"] = ["<=", getdate(to_date)]
+
+	# Moderators see all classes; a specific batch just narrows the result.
+	if is_moderator:
+		filters = dict(date_filters)
+		if batch:
+			filters["batch_name"] = batch
+		return frappe.get_all("LMS Live Class", filters=filters, fields=LIVE_CLASS_FIELDS)
 
 	if batch:
 		# An explicit batch is honoured only if the user may see it.
