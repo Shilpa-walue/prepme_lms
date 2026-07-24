@@ -16,15 +16,12 @@ required_apps = ["frappe/lms"]
 
 # Serve the Study Hub SPA (prepme_lms/frontend) under /prepme. The www page
 # study_hub.html is the compiled Vue shell; vue-router handles the sub-paths.
+# Everything prepme_lms adds lives on this surface - it makes no edits to the
+# stock LMS app, so it is fully portable and works on managed hosts (Frappe
+# Cloud) where the LMS app files are read-only.
 website_route_rules = [
 	{"from_route": "/prepme/<path:app_path>", "to_route": "study_hub"},
 ]
-
-# Re-apply the Study Tutor loader include into the LMS page shell after every
-# migrate/install, so it survives LMS updates; remove it on uninstall.
-after_install = "prepme_lms.lms_integration.inject_study_tutor"
-after_migrate = "prepme_lms.lms_integration.inject_study_tutor"
-before_uninstall = "prepme_lms.lms_integration.remove_study_tutor"
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [

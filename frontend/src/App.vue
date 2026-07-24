@@ -48,14 +48,17 @@
 import { FrappeUIProvider } from 'frappe-ui'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Calendar as CalendarIcon, GraduationCap } from 'lucide-vue-next'
+import { BookOpen, Calendar as CalendarIcon, GraduationCap } from 'lucide-vue-next'
 
 const route = useRoute()
 
-const navLinks = [{ label: 'Calendar', to: '/calendar', icon: CalendarIcon, name: 'Calendar' }]
+const navLinks = [
+	{ label: 'Courses', to: '/courses', icon: BookOpen, names: ['Courses', 'CourseDetail'] },
+	{ label: 'Calendar', to: '/calendar', icon: CalendarIcon, names: ['Calendar'] },
+]
 
 function isActive(link) {
-	return route.name === link.name
+	return link.names.includes(route.name)
 }
 
 // Session user from the cookie set by Frappe (null when Guest).

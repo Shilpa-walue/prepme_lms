@@ -22,6 +22,7 @@ from prepme_lms.services.course.course_service import (
 	CourseAccessDenied,
 	CourseNotFound,
 	get_course_details as build_course_details,
+	list_courses as build_course_list,
 )
 from prepme_lms.utils.response import error_response, success_response
 
@@ -52,6 +53,46 @@ def get_course_details(
 		include_instructor_notes=_as_bool(include_instructor_notes, default=False),
 		enforce_access=_as_bool(enforce_access, default=False),
 	)
+
+
+# --- SPA-facing endpoints -------------------------------------------------
+# These are consumed by the prepme_lms Study Hub SPA via frappe-ui's
+# createResource, which unwraps response.message. They therefore RETURN their
+# payload directly (frappe-ui-native) rather than using the success/data
+# envelope that get_course_details/get_course_curriculum keep for external
+# (e.g. React) callers.
+
+
+@frappe.whitelist(methods=["GET", "POST"])
+@rate_limit(limit=60, seconds=60)
+def get_courses(category: str = None, search: str = None):
+	"""List published courses for the catalogue (light fields, no curriculum)."""
+	try:
+		return {"courses": build_course_list(category=category, search=search, only_published=True)}
+	except Exception:
+		frappe.log_error(title="prepme_lms: get_courses failed", message=frappe.get_traceback())
+		frappe.throw(_("Unable to fetch courses"))
+
+
+@frappe.whitelist(methods=["GET", "POST"])
+@rate_limit(limit=60, seconds=60)
+def get_course(course: str = None, include_content: int = 1):
+	"""Full course tree for the SPA course-detail page (frappe-ui-native)."""
+	if not course or not str(course).strip():
+		frappe.throw(_("Parameter 'course' is required"))
+
+	try:
+		return build_course_details(
+			course=str(course).strip(),
+			include_content=_as_bool(include_content, default=True),
+			include_instructor_notes=False,
+			enforce_access=False,
+		)
+	except CourseNotFound:
+		frappe.throw(_("Course {0} not found").format(course), frappe.DoesNotExistError)
+	except Exception:
+		frappe.log_error(title="prepme_lms: get_course failed", message=frappe.get_traceback())
+		frappe.throw(_("Unable to fetch course details"))
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET", "POST"])

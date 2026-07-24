@@ -10,5 +10,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StudyTutorWidget: typeof import('./src/components/StudyTutorWidget.vue')['default']
   }
 }

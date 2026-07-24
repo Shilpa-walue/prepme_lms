@@ -510,6 +510,52 @@ def _build_summary(chapters: list) -> dict:
 	}
 
 
+def list_courses(category: str = None, search: str = None, only_published: bool = True) -> list:
+	"""List courses for the catalogue view (light fields, no curriculum)."""
+	filters = {}
+	if only_published:
+		filters["published"] = 1
+	if category:
+		filters["category"] = category
+	if search:
+		filters["title"] = ["like", f"%{search}%"]
+
+	rows = frappe.get_all(
+		"LMS Course",
+		filters=filters,
+		fields=[
+			"name", "title", "short_introduction", "image", "tags", "category",
+			"featured", "enrollments", "lessons", "rating",
+			"paid_course", "course_price", "currency", "published_on",
+		],
+		order_by="featured desc, published_on desc",
+	)
+
+	courses = []
+	for row in rows:
+		tags = [t.strip() for t in (row.tags or "").split(",") if t.strip()]
+		courses.append({
+			"id": row.name,
+			"title": row.title,
+			"short_introduction": row.short_introduction,
+			"image": _absolute(row.image),
+			"tags": tags,
+			"category": row.category,
+			"featured": bool(row.featured),
+			"stats": {
+				"enrollments": row.enrollments or 0,
+				"lesson_count": row.lessons or 0,
+				"rating": row.rating,
+			},
+			"pricing": {
+				"is_paid": bool(row.paid_course),
+				"amount": row.course_price,
+				"currency": row.currency,
+			},
+		})
+	return courses
+
+
 def _absolute(file_url: str) -> str | None:
 	if not file_url:
 		return None
