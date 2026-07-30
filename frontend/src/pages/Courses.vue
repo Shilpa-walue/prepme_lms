@@ -1,8 +1,15 @@
 <template>
 	<div class="flex h-full flex-col overflow-hidden">
-		<header class="sticky top-0 z-10 border-b bg-surface-white px-4 py-3">
-			<h1 class="text-lg font-semibold text-ink-gray-9">Courses</h1>
-			<p class="text-sm text-ink-gray-5">Browse the course catalogue</p>
+		<header
+			class="sticky top-0 z-10 flex items-center gap-3 border-b bg-surface-white px-4 py-3"
+		>
+			<Button variant="ghost" label="Back to LMS" @click="backToLms">
+				<template #prefix><ArrowLeft class="h-4 w-4" /></template>
+			</Button>
+			<div class="border-l pl-3">
+				<h1 class="text-lg font-semibold text-ink-gray-9">Courses</h1>
+				<p class="text-sm text-ink-gray-5">Browse the course catalogue</p>
+			</div>
 		</header>
 
 		<div class="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -78,7 +85,11 @@
 <script setup>
 import { Badge, Button, createResource, usePageMeta } from 'frappe-ui'
 import { computed } from 'vue'
-import { BookOpen } from 'lucide-vue-next'
+import { ArrowLeft, BookOpen } from 'lucide-vue-next'
+
+const backToLms = () => {
+	window.location.href = '/lms'
+}
 
 const resource = createResource({
 	url: 'prepme_lms.api.v1.course.get_courses',

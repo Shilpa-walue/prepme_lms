@@ -3,7 +3,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
 	{
 		path: '/',
-		redirect: '/courses',
+		redirect: '/calendar',
+	},
+	{
+		path: '/calendar',
+		name: 'Calendar',
+		component: () => import('@/pages/Calendar.vue'),
 	},
 	{
 		path: '/courses',
@@ -17,9 +22,8 @@ const routes = [
 		props: true,
 	},
 	{
-		path: '/calendar',
-		name: 'Calendar',
-		component: () => import('@/pages/Calendar.vue'),
+		path: '/:pathMatch(.*)*',
+		redirect: '/calendar',
 	},
 ]
 

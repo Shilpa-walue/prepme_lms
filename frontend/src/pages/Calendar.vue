@@ -3,9 +3,14 @@
 		<header
 			class="sticky top-0 z-10 flex flex-col justify-between gap-2 border-b bg-surface-white px-4 py-3 md:flex-row md:items-center"
 		>
-			<div>
-				<h1 class="text-lg font-semibold text-ink-gray-9">My Classes</h1>
-				<p class="text-sm text-ink-gray-5">Your scheduled live classes</p>
+			<div class="flex items-center gap-3">
+				<Button variant="ghost" label="Back to LMS" @click="backToLms">
+					<template #prefix><ArrowLeft class="h-4 w-4" /></template>
+				</Button>
+				<div class="border-l pl-3">
+					<h1 class="text-lg font-semibold text-ink-gray-9">My Classes</h1>
+					<p class="text-sm text-ink-gray-5">Your scheduled live classes</p>
+				</div>
 			</div>
 			<div class="flex items-center gap-3 text-sm text-ink-gray-6">
 				<span v-if="summary">
@@ -100,8 +105,14 @@
 <script setup>
 import { Button, Calendar, Dialog, createResource, usePageMeta } from 'frappe-ui'
 import { computed, inject, ref } from 'vue'
+import { ArrowLeft } from 'lucide-vue-next'
 
 const dayjs = inject('$dayjs')
+
+// Return to the stock LMS dashboard (a separate SPA, so a full navigation).
+const backToLms = () => {
+	window.location.href = '/lms'
+}
 
 const showEvent = ref(false)
 const activeEvent = ref(null)
