@@ -16,8 +16,9 @@ wins - it only supplies the route string to the sidebar item.
 import frappe
 
 # (route, title shown in the menu, lucide icon name)
+# Course browsing stays in the stock LMS (with the injected floating tutor); the
+# prepme surface only adds the Calendar.
 SIDEBAR_LINKS = [
-	("prepme/courses", "Courses", "BookOpen"),
 	("prepme/calendar", "Calendar", "Calendar"),
 ]
 
@@ -27,10 +28,22 @@ def setup_sidebar_links():
 	if not frappe.db.exists("DocType", "LMS Sidebar Item"):
 		return  # LMS not installed / incompatible version
 
+	desired = {route for route, _, _ in SIDEBAR_LINKS}
 	settings = frappe.get_single("LMS Settings")
-	existing_routes = {row.route for row in settings.sidebar_items}
 	changed = False
 
+	# Prune stale prepme entries (e.g. a link removed in a later version), so the
+	# menu self-heals on migrate. Only touches our own "prepme/..." routes.
+	kept = []
+	for row in settings.sidebar_items:
+		if (row.route or "").startswith("prepme/") and row.route not in desired:
+			changed = True  # drop it
+		else:
+			kept.append(row)
+	if changed:
+		settings.sidebar_items = kept
+
+	existing_routes = {row.route for row in settings.sidebar_items}
 	for route, title, icon in SIDEBAR_LINKS:
 		web_page = _ensure_web_page(route, title)
 		if route not in existing_routes and not any(
@@ -41,6 +54,14 @@ def setup_sidebar_links():
 
 	if changed:
 		settings.save(ignore_permissions=True)
+
+	# Delete orphaned prepme Web Pages no longer referenced.
+	for name, route in frappe.get_all(
+		"Web Page", filters={"route": ["like", "prepme/%"]}, fields=["name", "route"], as_list=True
+	):
+		if route not in desired:
+			frappe.delete_doc("Web Page", name, force=True, ignore_permissions=True)
+
 	frappe.db.commit()
 
 

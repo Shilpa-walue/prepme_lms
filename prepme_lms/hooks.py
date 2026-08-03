@@ -30,6 +30,13 @@ after_install = "prepme_lms.lms_integration.setup_sidebar_links"
 after_migrate = "prepme_lms.lms_integration.setup_sidebar_links"
 before_uninstall = "prepme_lms.lms_integration.remove_sidebar_links"
 
+# Splice the Study Tutor loader into the stock LMS course pages by rewriting the
+# HTML response in memory. Works on the LMS SPA shell and on Frappe Cloud
+# (read-only app files), because nothing is written to disk.
+after_request = [
+	"prepme_lms.utils.inject.inject_study_tutor_script",
+]
+
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{

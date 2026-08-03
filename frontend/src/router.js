@@ -10,17 +10,8 @@ const routes = [
 		name: 'Calendar',
 		component: () => import('@/pages/Calendar.vue'),
 	},
-	{
-		path: '/courses',
-		name: 'Courses',
-		component: () => import('@/pages/Courses.vue'),
-	},
-	{
-		path: '/courses/:courseId',
-		name: 'CourseDetail',
-		component: () => import('@/pages/CourseDetail.vue'),
-		props: true,
-	},
+	// Course browsing stays in the stock LMS (where the floating Study Tutor is
+	// now injected). The prepme surface is the calendar.
 	{
 		path: '/:pathMatch(.*)*',
 		redirect: '/calendar',
